@@ -5,10 +5,6 @@ require('dotenv').config({
 const puppeteer = require('puppeteer');
 const { getAuthCode } = require('../../auth-looper.js');
 
-// for testing
-const fs = require('fs');
-const sampleJson = JSON.parse(fs.readFileSync('test-account.json', 'utf8')); // https://stackoverflow.com/a/10011078/2710227
-
 /**
  * this function will visit a url with Puppeteer
  * and run through the interaction steps to login, deal with 2FA if applicable
@@ -79,3 +75,6 @@ const processAccount = async (jsonAccountAccessInfo) => {
   }
 };
 
+module.exports = {
+  processAccount
+};
