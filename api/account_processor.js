@@ -54,11 +54,14 @@ const processAccount = async (jsonAccountAccessInfo) => {
   });
 
   let interactionStep = 0;
+  const loggingEnabled = true;
 
   // ready to run through interactions
   try {
     const processStep = async (step) => {
       const { type } = step;
+
+      if (loggingEnabled) console.log(step);
 
       switch (type) {
         case "input":
@@ -97,10 +100,8 @@ const processAccount = async (jsonAccountAccessInfo) => {
           await page.type(step.dom_target, authCode.toString());
           break;
         case "balance target":
-          const balance = await page.evaluate(
-            (step) => { document.querySelector(step.dom_target).innerText },
-            step
-          );
+          const balance = await page.$eval(step.dom_target, el => el.textContent);
+          await browser.close();
 
           return {
             balance,
@@ -118,7 +119,8 @@ const processAccount = async (jsonAccountAccessInfo) => {
       }
     };
 
-    return await processStep(interactions[interactionStep]);
+    const balance = await processStep(interactions[interactionStep]);
+    return balance;
   } catch (e) {
     return {
       err: true

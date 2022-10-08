@@ -14,7 +14,9 @@ const getAuthCodeFromDb = async (accountPrefix) => {
             // validate if within 10 minute limit in case old/still waiting
             const now = trimTimestamp(Date.now());
 
-            if (qres[0].updated_at < now + 600) {
+            console.log(`${now} vs ${qres[0].updated_at}`);
+
+            if ((now - 120) < qres[0].updated_at) { // 2 minute min elapsed time check
               resolve({err: false, authCode: qres[0].auth_code});
             } else {
               resolve({err: false});
@@ -51,41 +53,57 @@ const _getAccount = async (accountPrefix) => {
 // no validation, want only one entry
 // check exists if not write or update
 const addAuthCode = async (req, res) => {
-  return new Promise(async (resolve) => {
-    const accountPrefix = req.body.accountPrefix;
-    const authCode = req.body.authCode;
-    const timestamp = trimTimestamp(Date.now());
-    const account = await _getAccount(accountPrefix);
+  const accountPrefix = req.body.accountPrefix;
+  const authCode = req.body.authCode;
+  const timestamp = trimTimestamp(Date.now());
+  const account = await _getAccount(accountPrefix);
 
-    if (account?.exists) {
-      pool.query(
-        `UPDATE auth_codes SET auth_code = ?, updated_at = ? WHERE account_prefix = ?`,
-        [authCode, timestamp, accountPrefix],
-        (err, qres) => {
-          if (err) {
-            res.status(400).json({err: true});
-          } else {
-            res.status(200).json({err: false});
-          }
+  if (account?.exists) {
+    pool.query(
+      `UPDATE auth_codes SET auth_code = ?, updated_at = ? WHERE account_prefix = ?`,
+      [authCode, timestamp, accountPrefix],
+      (err, qres) => {
+        if (err) {
+          res.status(400).json({err: true});
+        } else {
+          res.status(200).json({err: false});
         }
-      );
-    } else {
-      pool.query(
-        `INSERT INTO auth_codes SET account_prefix = ?, auth_code = ?, updated_at = ?`,
-        [accountPrefix, authCode, timestamp ],
-        (err, qres) => {
-          if (err) {
-            res.status(400).json({err: true});
-          } else {
-            res.status(200).json({err: false});
-          }
+      }
+    );
+  } else {
+    pool.query(
+      `INSERT INTO auth_codes SET account_prefix = ?, auth_code = ?, updated_at = ?`,
+      [accountPrefix, authCode, timestamp ],
+      (err, qres) => {
+        if (err) {
+          res.status(400).json({err: true});
+        } else {
+          res.status(200).json({err: false});
         }
-      ); 
+      }
+    ); 
+  }
+}
+
+const getAccountPrefixes = async (req, res) => {
+  pool.query(
+    `SELECT account_prefix FROM auth_codes WHERE id > 0`,
+    (err, qres) => {
+      if (err) {
+        res.status(400).json({err: true});
+      } else {
+        if (qres.length) {
+          res.status(200).json({err: false, accountPrefixes: qres.map(row => row.account_prefix)});
+        } else {
+          res.status(200).json({err: false, accountPrefixes: []});
+        }
+      }
     }
-  });
+  );
 }
 
 module.exports = {
   getAuthCodeFromDb,
-  addAuthCode
+  addAuthCode,
+  getAccountPrefixes
 };

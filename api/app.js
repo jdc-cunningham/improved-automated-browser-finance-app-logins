@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 5042;
 
-const { getAuthCode, addAuthCode } = require('./methods');
+const { addAuthCode, getAccountPrefixes } = require('./methods');
 
 // CORs
 app.use((req, res, next) => {
@@ -22,6 +22,8 @@ app.use(
 app.get('/', (req, res) => {
   res.status(200).send('online');
 });
+
+app.get('/get-account-prefixes', getAccountPrefixes);
 
 app.post('/add-auth-code', addAuthCode);
 

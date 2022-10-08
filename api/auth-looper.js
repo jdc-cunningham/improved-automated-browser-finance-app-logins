@@ -1,7 +1,6 @@
 const { getAuthCodeFromDb } = require('./methods');
 
 const checkForAuthCode = async (callCount, accountPrefix, topResolve) => { // lol wut
-  console.log('check');
   callCount += 1;
 
   if (callCount === 119) {

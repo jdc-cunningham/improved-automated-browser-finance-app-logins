@@ -1,6 +1,6 @@
 # files
 .env
-test-account.json
+test-account*.json
 screenshot.png
 
 # folders

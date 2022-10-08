@@ -10,6 +10,7 @@
 <body>
   <div id="app">
     <h1>Add auth code</h1>
+    <p id="prefix-list">Fetching existing accounts...</p>
     <div class="row">
       <input id="account-prefix"  type="text" name="prefix" placeholder="ex. bofa"/>
       <input id="auth-code" type="number" name="auth code" placeholder="123456"/>
@@ -35,6 +36,25 @@
       xhr.send(params);
       return xhr;
     }
+
+    function getAjax(url, success) {
+        var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+        xhr.open('GET', url);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState>3 && xhr.status==200) success(xhr.responseText);
+        };
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.send();
+        return xhr;
+    }
+
+    getAjax('http://localhost:5042/get-account-prefixes', res => {
+      const data = JSON.parse(res);
+
+      if (data?.accountPrefixes.length) {
+        document.getElementById('prefix-list').innerText = 'Existing accounts:' + '\n\n' + data.accountPrefixes.map(val => val).join('\n');
+      }
+    });
 
     const addBtn = document.getElementById('add-auth-code');
 
