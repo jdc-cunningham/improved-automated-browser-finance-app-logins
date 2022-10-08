@@ -1,9 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-const port = 5000;
+const port = 5042;
 
-const { getAuthCode } = require('./methods');
+const { getAuthCode, addAuthCode } = require('./methods');
 
 // CORs
 app.use((req, res, next) => {
@@ -24,6 +24,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/auth-code', getAuthCode);
+app.post('/add-auth-code', addAuthCode);
 
 app.listen(port, () => {
   console.log(`App running... on port ${port}`);
