@@ -1,6 +1,7 @@
 {
+  "captcha": false,
   "url": "",
-  "auth_interactions": [
+  "interactions": [
     {
       "type": "input",
       "name": "email",
@@ -21,7 +22,7 @@
     {
       "type": "2fa",
       "url": "",
-      "dom_targets": "'input[type=radio]'",
+      "dom_target": "input[value=SMS]",
       "which_node": 1
     },
     {
@@ -36,6 +37,7 @@
     },
     {
       "type": "button",
+      "name": "2fa submit",
       "dom_target": "button[type=submit]"
     },
     {

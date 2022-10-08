@@ -3,7 +3,21 @@ require('dotenv').config({
 });
 
 const puppeteer = require('puppeteer');
-const { getAuthCode } = require('../../auth-looper.js');
+const { getAuthCode } = require('./auth-looper');
+
+// https://stackoverflow.com/a/46965281/2710227
+const delay = (time) => {
+  return new Promise(function(resolve) { 
+    setTimeout(resolve, time)
+  });
+}
+
+const takeScreenshot = async () => {
+  await page.screenshot({
+    path: "./screenshot.png",
+    fullPage: true
+  });
+}
 
 /**
  * this function will visit a url with Puppeteer
@@ -13,15 +27,33 @@ const { getAuthCode } = require('../../auth-looper.js');
  */
 const processAccount = async (jsonAccountAccessInfo) => {
   // load site
-  const { url, interactions } = jsonAccountAccessInfo;
-  const browser = await puppeteer.launch();
+  const { url, interactions, captcha } = jsonAccountAccessInfo;
+
+  const browser = await puppeteer.launch({
+    headless: !captcha,
+    dumpio: false // if you want to see website's console log, interesting
+    // https://stackoverflow.com/a/60747187/2710227
+  });
+
   const page = await browser.newPage();
-
-  let interactionStep = 0;
-
   page.setViewport({ width: 1280, height: 720 });
+
   await page.goto(url);
   await page.waitForSelector(interactions[0].dom_target);
+
+  // console.log output from inside page.evaluate
+  // https://stackoverflow.com/a/46245945/2710227
+  page.on('console', async (msg) => {
+    const msgArgs = msg.args();
+
+    console.log('remote page console logs');
+
+    for (let i = 0; i < msgArgs.length; ++i) {
+      console.log(await msgArgs[i].jsonValue());
+    }
+  });
+
+  let interactionStep = 0;
 
   // ready to run through interactions
   try {
@@ -30,26 +62,45 @@ const processAccount = async (jsonAccountAccessInfo) => {
 
       switch (type) {
         case "input":
-          await page.$eval(step.dom_target, (el) => el.value = process.env[step.value_lookup]);
+          // there is a difference between page.$eval and page.evaluate
+          await page.type(step.dom_target, process.env[step.value_lookup]);
           break;
         case "button":
-          await page.$eval(step.dom_target, el => el.click());
+          await page.evaluate(
+            (step) => { document.querySelector(step.dom_target).click() },
+            step
+          );
+          await delay(10000); // time to deal with captcha, captcha not always applicable
           break;
         case "2fa":
-          if (dom_targets in step) { // multi-radio
-            await page.$eval(
-              () => document.querySelectorAll(step.dom_targets)[step.which_node].click()
-            ); // https://stackoverflow.com/a/55524107/2710227
+          if ("dom_targets" in step) { // multi-radio
+            await page.waitForSelector(step.dom_targets);
+            // this is not working, doesn't click
+            // have tried querySelectorAll as well
+            Array.from(await page.$$(step.dom_targets)).forEach((index, radio) => {
+              if (index === step.which_node) {
+                radio.click();
+              }
+            });
           } else {
-            await page.$eval(step.dom_target, el => el.click());
+            await page.waitForSelector(step.dom_target);
+            await page.evaluate(
+              (step) => { document.querySelector(step.dom_target).click() },
+              step
+            );
           }
           break;
         case "2fa input": // special case, requires waiting for code
           // waits for db auth code entry to be present within 10 minute max time frame
-          const authCode = await getAuthCode(step["2fa_lookup"]);
-          await page.$eval(step.dom_target, (el) => el.value = authCode);
+          let attempts = 0;
+          const authCode = await getAuthCode(attempts, step["2fa_lookup"]);
+          await page.type(step.dom_target, authCode.toString());
+          break;
         case "balance target":
-          const balance = await page.$eval(step.dom_target, el => el.textContent);
+          const balance = await page.evaluate(
+            (step) => { document.querySelector(step.dom_target).innerText },
+            step
+          );
 
           return {
             balance,
@@ -63,7 +114,7 @@ const processAccount = async (jsonAccountAccessInfo) => {
       interactionStep += 1;
 
       if (interactionStep < interactions.length) {
-        processStep(interactionStep);
+        processStep(interactions[interactionStep]);
       }
     };
 

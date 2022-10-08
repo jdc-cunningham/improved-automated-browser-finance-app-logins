@@ -23,7 +23,6 @@ app.get('/', (req, res) => {
   res.status(200).send('online');
 });
 
-app.get('/auth-code', getAuthCode);
 app.post('/add-auth-code', addAuthCode);
 
 app.listen(port, () => {

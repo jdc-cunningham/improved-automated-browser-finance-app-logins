@@ -1,6 +1,7 @@
 # files
 .env
 test-account.json
+screenshot.png
 
 # folders
 node_modules/
