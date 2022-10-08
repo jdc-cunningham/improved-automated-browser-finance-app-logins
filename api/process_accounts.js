@@ -6,7 +6,6 @@ const sampleJson = JSON.parse(fs.readFileSync('test-account2.json', 'utf8')); //
 
 const runSync = async () => {
   const balance = await processAccount(sampleJson);
-  console.log(balance);
 };
 
 runSync();

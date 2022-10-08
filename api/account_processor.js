@@ -26,106 +26,103 @@ const takeScreenshot = async () => {
  * @param {Object} jsonAccountAccessInfo 
  */
 const processAccount = async (jsonAccountAccessInfo) => {
-  // load site
-  const { url, interactions, captcha } = jsonAccountAccessInfo;
+  return new Promise(async (resolve) => {
+    // load site
+    const { url, interactions, captcha } = jsonAccountAccessInfo;
 
-  const browser = await puppeteer.launch({
-    headless: !captcha,
-    dumpio: false // if you want to see website's console log, interesting
-    // https://stackoverflow.com/a/60747187/2710227
-  });
+    const browser = await puppeteer.launch({
+      headless: !captcha,
+      dumpio: false // if you want to see website's console log, interesting
+      // https://stackoverflow.com/a/60747187/2710227
+    });
 
-  const page = await browser.newPage();
-  page.setViewport({ width: 1280, height: 720 });
+    const page = await browser.newPage();
+    page.setViewport({ width: 1280, height: 720 });
 
-  await page.goto(url);
-  await page.waitForSelector(interactions[0].dom_target);
+    await page.goto(url);
+    await page.waitForSelector(interactions[0].dom_target);
 
-  // console.log output from inside page.evaluate
-  // https://stackoverflow.com/a/46245945/2710227
-  page.on('console', async (msg) => {
-    const msgArgs = msg.args();
+    // console.log output from inside page.evaluate
+    // https://stackoverflow.com/a/46245945/2710227
+    page.on('console', async (msg) => {
+      const msgArgs = msg.args();
 
-    console.log('remote page console logs');
+      console.log('remote page console logs');
 
-    for (let i = 0; i < msgArgs.length; ++i) {
-      console.log(await msgArgs[i].jsonValue());
-    }
-  });
+      for (let i = 0; i < msgArgs.length; ++i) {
+        console.log(await msgArgs[i].jsonValue());
+      }
+    });
 
-  let interactionStep = 0;
-  const loggingEnabled = true;
+    let interactionStep = 0;
+    let balance = null; // generally a string but could be float ha
+    const loggingEnabled = true;
 
-  // ready to run through interactions
-  try {
-    const processStep = async (step) => {
-      const { type } = step;
+    // ready to run through interactions
+    try {
+      const processStep = async (step) => {
+        const { type } = step;
 
-      if (loggingEnabled) console.log(step);
+        if (loggingEnabled) console.log(step);
 
-      switch (type) {
-        case "input":
-          // there is a difference between page.$eval and page.evaluate
-          await page.type(step.dom_target, process.env[step.value_lookup]);
-          break;
-        case "button":
-          await page.evaluate(
-            (step) => { document.querySelector(step.dom_target).click() },
-            step
-          );
-          await delay(10000); // time to deal with captcha, captcha not always applicable
-          break;
-        case "2fa":
-          if ("dom_targets" in step) { // multi-radio
-            await page.waitForSelector(step.dom_targets);
-            // this is not working, doesn't click
-            // have tried querySelectorAll as well
-            Array.from(await page.$$(step.dom_targets)).forEach((index, radio) => {
-              if (index === step.which_node) {
-                radio.click();
-              }
-            });
-          } else {
-            await page.waitForSelector(step.dom_target);
+        switch (type) {
+          case "input":
+            // there is a difference between page.$eval and page.evaluate
+            await page.type(step.dom_target, process.env[step.value_lookup]);
+            break;
+          case "button":
             await page.evaluate(
               (step) => { document.querySelector(step.dom_target).click() },
               step
             );
-          }
-          break;
-        case "2fa input": // special case, requires waiting for code
-          // waits for db auth code entry to be present within 10 minute max time frame
-          let attempts = 0;
-          const authCode = await getAuthCode(attempts, step["2fa_lookup"]);
-          await page.type(step.dom_target, authCode.toString());
-          break;
-        case "balance target":
-          const balance = await page.$eval(step.dom_target, el => el.textContent);
-          await browser.close();
+            await delay(10000); // time to deal with captcha, captcha not always applicable
+            break;
+          case "2fa":
+            if ("dom_targets" in step) { // multi-radio
+              await page.waitForSelector(step.dom_targets);
+              // this is not working, doesn't click
+              // have tried querySelectorAll as well
+              Array.from(await page.$$(step.dom_targets)).forEach((index, radio) => {
+                if (index === step.which_node) {
+                  radio.click();
+                }
+              });
+            } else {
+              await page.waitForSelector(step.dom_target);
+              await page.evaluate(
+                (step) => { document.querySelector(step.dom_target).click() },
+                step
+              );
+            }
+            break;
+          case "2fa input": // special case, requires waiting for code
+            // waits for db auth code entry to be present within 10 minute max time frame
+            let attempts = 0;
+            const authCode = await getAuthCode(attempts, step["2fa_lookup"]);
+            await page.type(step.dom_target, authCode.toString());
+            break;
+          case "balance target":
+            balance = await page.$eval(step.dom_target, el => el.textContent);
+            await browser.close();
+            break;
+          default:
+            throw 'unknown interaction';
+        }
 
-          return {
-            balance,
-            column: step.spreadsheet_column,
-            err: false
-          };
-        default:
-          throw 'unknown interaction';
-      }
+        interactionStep += 1;
 
-      interactionStep += 1;
+        if (interactionStep < interactions.length) {
+          processStep(interactions[interactionStep]);
+        } else {
+          resolve(balance);
+        }
+      };
 
-      if (interactionStep < interactions.length) {
-        processStep(interactions[interactionStep]);
-      }
-    };
-
-    const balance = await processStep(interactions[interactionStep]);
-    return balance;
-  } catch (e) {
-    return {
-      err: true
-    };
-  }
+      await processStep(interactions[interactionStep]);
+    } catch (e) {
+      resolve(false);
+    }
+  });
 };
 
 module.exports = {
