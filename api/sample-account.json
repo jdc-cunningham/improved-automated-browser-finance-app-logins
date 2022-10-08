@@ -1,0 +1,48 @@
+{
+  "url": "",
+  "auth_interactions": [
+    {
+      "type": "input",
+      "name": "email",
+      "dom_target": "input[type=email]",
+      "value_lookup": "random-string-for-env"
+    },
+    {
+      "type": "input",
+      "name": "password",
+      "dom_target": "input[type=password]",
+      "value_lookup": "random-string-for-env"
+    },
+    {
+      "type": "button",
+      "name": "sign in",
+      "dom_target": "button[type=submit]",
+      "value_lookup": "random-string-for-env"
+    },
+    {
+      "type": "2fa",
+      "url": "",
+      "dom_targets": "'input[type=radio]'",
+      "which_node": 1
+    },
+    {
+      "type": "button",
+      "dom_target": "button[type=submit]"
+    },
+    {
+      "type": "input",
+      "name": "2fa code",
+      "dom_target": "input[type=text]",
+      "2fa_lookup": "upgrade"
+    },
+    {
+      "type": "button",
+      "dom_target": "button[type=submit]"
+    },
+    {
+      "type": "balance target",
+      "dom_target": "span[data-auto=current-balance-value]",
+      "spreadsheet_column": "T"
+    }
+  ]
+}

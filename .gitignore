@@ -1,0 +1,6 @@
+# files
+.env
+test-account.json
+
+# folders
+node_modules/
