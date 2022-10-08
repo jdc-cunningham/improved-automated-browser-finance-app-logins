@@ -5,19 +5,18 @@
       "type": "input",
       "name": "email",
       "dom_target": "input[type=email]",
-      "value_lookup": "random-string-for-env"
+      "value_lookup": "ACCOUNT_EMAIL"
     },
     {
       "type": "input",
       "name": "password",
       "dom_target": "input[type=password]",
-      "value_lookup": "random-string-for-env"
+      "value_lookup": "ACCOUNT_PASS"
     },
     {
       "type": "button",
       "name": "sign in",
-      "dom_target": "button[type=submit]",
-      "value_lookup": "random-string-for-env"
+      "dom_target": "button[type=submit]"
     },
     {
       "type": "2fa",
@@ -30,7 +29,7 @@
       "dom_target": "button[type=submit]"
     },
     {
-      "type": "input",
+      "type": "2fa input",
       "name": "2fa code",
       "dom_target": "input[type=text]",
       "2fa_lookup": "upgrade"
