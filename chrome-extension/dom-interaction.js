@@ -1,5 +1,6 @@
 let elementPickEnabled = false;
 let parentId = "";
+let type = "";
 
 // expects object
 const sendMessageToExtension = (msg) => {
@@ -17,6 +18,7 @@ chrome.runtime.onMessage.addListener((request, sender, callback) => {
     if (msg.cmd === 'show-hover-element-picker') {
       elementPickEnabled = true;
       parentId = msg.parentId;
+      type = msg.type;
     }
   }
 
@@ -59,13 +61,19 @@ document.addEventListener('click', (el) => {
     // determine unique selector for element
     el.target.style.border = "";
     elementPickEnabled = false;
-    parentId = "";
 
     console.log(domPathFinder(el.target));
+    
+    console.log(parentId);
 
     sendMessageToExtension({
       elementPath: domPathFinder(el.target),
-      parentId
+      parentId,
+      type
     });
+
+    // reset
+    parentId = "";
+    type = "";
   }
 });

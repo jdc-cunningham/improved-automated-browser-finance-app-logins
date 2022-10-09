@@ -7,6 +7,10 @@
 let storage = localStorage.getItem('ibfa-temp-store');
 storage = storage ? JSON.parse(storage) : {};
 
+if (!('interactions' in storage)) {
+  storage['interactions'] = {};
+}
+
 // pop-ui interactive elements
 const accountUrl = document.getElementById('account-url');
 const selectInteraction = document.getElementById('select-interaction-type');
@@ -29,15 +33,15 @@ document.addEventListener('keyup', (el) => {
   const parentId = el.target.parentNode.parentNode.id;
   const interactionType = document.getElementById(parentId).getAttribute('data-type');
   console.log('parent id', parentId);
+  
+  console.log('key up');
 
-  if (!('interactions' in storage)) {
-    storage['interactions'] = {};
+  if (!(parentId in storage.interactions)) {
+    storage.interactions[parentId] = {
+      id: parentId,
+      type: interactionType
+    };
   }
-
-  storage['interactions'][parentId] = {
-    id: parentId,
-    type: interactionType
-  };
 
   switch (interactionType) {
     case "input":
@@ -77,7 +81,7 @@ document.addEventListener('click', (el) => {
   if (el.target.nodeName === "BUTTON" && el.target.name === "remove") {
     const parentId = el.target.parentNode.id;
     console.log(parentId, storage);
-    delete storage.interactions[parentId];
+    storage.interactions[parentId] = undefined;
     document.getElementById(parentId).remove();
     console.log(storage);
     saveData();
@@ -86,20 +90,21 @@ document.addEventListener('click', (el) => {
   if (el.target.nodeName === "BUTTON" && el.target.name === "element-picker") {
     console.log('pick');
     const parentId = el.target.parentNode.parentNode.id;
+    const type = document.getElementById(parentId).querySelector('.type').innerText.split('type: ')[1];
 
     sendMessageToInjectedScript({
       cmd: 'show-hover-element-picker',
-      parentId
+      parentId,
+      type
     });
   }
 });
 
 const renderHtml = (interaction) => {
-  console.log(interaction);
   switch (interaction.type) {
     case "input":
       return `<div id="${interaction.id || Date.now()}" data-type="input" class="interaction-group">
-        <p class="bold">type: ${interaction.type || ""}</p>
+        <p class="bold type">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
         <span>
           dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
@@ -110,7 +115,7 @@ const renderHtml = (interaction) => {
       </div>`; // minor duplicate wrapper code
     case "button":
       return `<div id="${Date.now()}" data-type="button" class="interaction-group">
-        <p class="bold">type: ${interaction.type || ""}</p>
+        <p class="bold type">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
         <span>
           dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
@@ -122,7 +127,7 @@ const renderHtml = (interaction) => {
       // url is not really important here but can be used
       // there is also the possiblity of multi select issue that's problematic on puppeteer side
       return `<div id="${Date.now()}" data-type="2fa option" class="interaction-group">
-        <p class="bold">type: ${interaction.type || ""}</p>
+        <p class="bold type">type: ${interaction.type || ""}</p>
         <span>url: <input type="text" name="url" value="${interaction.url || ""}"/></span>
         <span>
           dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
@@ -132,7 +137,7 @@ const renderHtml = (interaction) => {
       </div>`;
     case "2fa input":
       return `<div id="${Date.now()}" data-type="2fa input" class="interaction-group">
-        <p class="bold">type: ${interaction.type || ""}</p>
+        <p class="bold type">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
         <span>
           dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
@@ -143,7 +148,7 @@ const renderHtml = (interaction) => {
       </div>`;
     case "balance target":
       return `<div id="${Date.now()}" data-type="balance target" class="interaction-group">
-        <p class="bold">type: ${interaction.type || ""}</p>
+        <p class="bold type">type: ${interaction.type || ""}</p>
         <span>
           dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
           ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
@@ -195,11 +200,23 @@ addInteraction.addEventListener('click', () => {
 // receive from dom-interaction.js
 chrome.runtime.onMessage.addListener((request, sender, callback) => {
   const msg = request;
+
+  console.log(msg);
   
   if (msg?.elementPath) {
+    parentId = msg.parentId;
     // validate what it is and clean, also do it on server side
-    console.log(msg);
-    document.getElementsById(msg.parentId).querySelector('input[name=dom_target]').value = msg.elementPath;
+    document.getElementById(msg.parentId).querySelector('input[name=dom_target]').value = msg.elementPath;
+
+    if (!(parentId in storage.interactions)) {
+      storage.interactions[parentId] = {
+        id: parentId,
+        type: msg.type
+      };
+    }
+
+    storage.interactions[parentId]['dom_target'] = msg.elementPath;
+    saveData();
   }
 
   // have to call this to avoid error
