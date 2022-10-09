@@ -14,6 +14,14 @@ const addInteraction = document.getElementById('add-interaction');
 const addedInteractions = document.getElementById('added-interactions');
 const addAccount = document.getElementById('add-account');
 
+const sendMessageToInjectedScript = (msg) => {
+  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+    chrome.tabs.sendMessage(tabs[0].id, msg, (response) => {
+      // not doing anything with response yet
+    });
+  });
+}
+
 // globally bounded event for future elements
 // this captures modifications to input elements primarily for interactions
 // forms the object and saves, keeps order of interactions
@@ -66,7 +74,6 @@ document.addEventListener('keyup', (el) => {
 });
 
 document.addEventListener('click', (el) => {
-  console.log(el);
   if (el.target.nodeName === "BUTTON" && el.target.name === "remove") {
     const parentId = el.target.parentNode.id;
     console.log(parentId, storage);
@@ -74,6 +81,16 @@ document.addEventListener('click', (el) => {
     document.getElementById(parentId).remove();
     console.log(storage);
     saveData();
+  }
+
+  if (el.target.nodeName === "BUTTON" && el.target.name === "element-picker") {
+    console.log('pick');
+    const parentId = el.target.parentNode.parentNode.id;
+
+    sendMessageToInjectedScript({
+      cmd: 'show-hover-element-picker',
+      parentId
+    });
   }
 });
 
@@ -84,7 +101,10 @@ const renderHtml = (interaction) => {
       return `<div id="${interaction.id || Date.now()}" data-type="input" class="interaction-group">
         <p class="bold">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
-        <span>dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/></span>
+        <span>
+          dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
+          ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
+        </span>
         <span>value lookup: <input type="text" name="value_lookup" value="${interaction.value_lookup || ""}"/></span>
         <button name="remove" type="button">remove</button>
       </div>`; // minor duplicate wrapper code
@@ -92,7 +112,10 @@ const renderHtml = (interaction) => {
       return `<div id="${Date.now()}" data-type="button" class="interaction-group">
         <p class="bold">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
-        <span>dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/></span>
+        <span>
+          dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
+          ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
+        </span>
         <button name="remove" type="button">remove</button>
       </div>`;
     case "2fa option":
@@ -101,21 +124,30 @@ const renderHtml = (interaction) => {
       return `<div id="${Date.now()}" data-type="2fa option" class="interaction-group">
         <p class="bold">type: ${interaction.type || ""}</p>
         <span>url: <input type="text" name="url" value="${interaction.url || ""}"/></span>
-        <span>dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/></span>
+        <span>
+          dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
+          ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
+        </span>
         <button name="remove" type="button">remove</button>
       </div>`;
     case "2fa input":
       return `<div id="${Date.now()}" data-type="2fa input" class="interaction-group">
         <p class="bold">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
-        <span>dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/></span>
+        <span>
+          dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
+          ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
+        </span>
         <span>2fa lookup: <input type="text" name="2fa_lookup" value="${interaction.value_lookup || ""}"/></span>
         <button name="remove" type="button">remove</button>
       </div>`;
     case "balance target":
       return `<div id="${Date.now()}" data-type="balance target" class="interaction-group">
         <p class="bold">type: ${interaction.type || ""}</p>
-        <span>dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/></span>
+        <span>
+          dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
+          ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
+        </span>
         <span>spreadsheet column: <input type="text" name="2fa_lookup" value="${interaction.spreadsheet_column || ""}"/></span>
         <button name="remove" type="button">remove</button>
       </div>`;
@@ -160,3 +192,16 @@ addInteraction.addEventListener('click', () => {
   });
 });
 
+// receive from dom-interaction.js
+chrome.runtime.onMessage.addListener((request, sender, callback) => {
+  const msg = request;
+  
+  if (msg?.elementPath) {
+    // validate what it is and clean, also do it on server side
+    console.log(msg);
+    document.getElementsById(msg.parentId).querySelector('input[name=dom_target]').value = msg.elementPath;
+  }
+
+  // have to call this to avoid error
+  callback('poup-ui ack');
+});
