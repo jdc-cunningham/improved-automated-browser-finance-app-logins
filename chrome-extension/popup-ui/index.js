@@ -17,12 +17,26 @@ const selectInteraction = document.getElementById('select-interaction-type');
 const addInteraction = document.getElementById('add-interaction');
 const addedInteractions = document.getElementById('added-interactions');
 const addAccount = document.getElementById('add-account');
+const resetButton = document.getElementById('reset');
+
+resetButton.addEventListener('click', () => {
+  storage = {};
+  saveData();
+  loadData(true);
+});
 
 const sendMessageToInjectedScript = (msg) => {
   chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
     chrome.tabs.sendMessage(tabs[0].id, msg, (response) => {
       // not doing anything with response yet
     });
+  });
+}
+
+const updateValues = (parentId) => {
+  Array.from(document.getElementById(parentId).getElementsByTagName('INPUT')).forEach(input => {
+    console.log(input.name, input.value);
+    storage['interactions'][parentId][input.name] = input.value;
   });
 }
 
@@ -34,7 +48,7 @@ document.addEventListener('keyup', (el) => {
   const interactionType = document.getElementById(parentId).getAttribute('data-type');
   console.log('parent id', parentId);
   
-  console.log('key up');
+  console.log('key up', interactionType);
 
   if (!(parentId in storage.interactions)) {
     storage.interactions[parentId] = {
@@ -45,29 +59,11 @@ document.addEventListener('keyup', (el) => {
 
   switch (interactionType) {
     case "input":
-      Array.from(document.getElementById(parentId).getElementsByTagName('INPUT')).forEach(input => {
-        storage['interactions'][parentId][input.name] = input.value;
-      });
-      break;
     case "button":
-      Array.from(document.getElementById(parentId).getElementsByTagName('INPUT')).forEach(input => {
-        storage['interactions'][parentId][input.name] = input.value;
-      });
-      break;
     case "2fa option":
-      Array.from(document.getElementById(parentId).getElementsByTagName('INPUT')).forEach(input => {
-        storage['interactions'][parentId][input.name] = input.value;
-      });
-      break;
     case "2fa input":
-      Array.from(document.getElementById(parentId).getElementsByTagName('INPUT')).forEach(input => {
-        storage['interactions'][parentId][input.name] = input.value;
-      });
-      break;
     case "balance target":
-      Array.from(document.getElementById(parentId).getElementsByTagName('INPUT')).forEach(input => {
-        storage['interactions'][parentId][input.name] = input.value;
-      });
+      updateValues(parentId);
       break;
     default:
       // do nothing
@@ -100,10 +96,12 @@ document.addEventListener('click', (el) => {
   }
 });
 
-const renderHtml = (interaction) => {
+const renderHtml = (interaction, id = "") => {
+  const dateNow = Date.now();
+
   switch (interaction.type) {
     case "input":
-      return `<div id="${interaction.id || Date.now()}" data-type="input" class="interaction-group">
+      return `<div id="${id || dateNow}" data-type="input" class="interaction-group">
         <p class="bold type">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
         <span>
@@ -114,7 +112,7 @@ const renderHtml = (interaction) => {
         <button name="remove" type="button">remove</button>
       </div>`; // minor duplicate wrapper code
     case "button":
-      return `<div id="${Date.now()}" data-type="button" class="interaction-group">
+      return `<div id="${id || dateNow}" data-type="button" class="interaction-group">
         <p class="bold type">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
         <span>
@@ -126,7 +124,7 @@ const renderHtml = (interaction) => {
     case "2fa option":
       // url is not really important here but can be used
       // there is also the possiblity of multi select issue that's problematic on puppeteer side
-      return `<div id="${Date.now()}" data-type="2fa option" class="interaction-group">
+      return `<div id="${id || dateNow}" data-type="2fa option" class="interaction-group">
         <p class="bold type">type: ${interaction.type || ""}</p>
         <span>url: <input type="text" name="url" value="${interaction.url || ""}"/></span>
         <span>
@@ -136,7 +134,7 @@ const renderHtml = (interaction) => {
         <button name="remove" type="button">remove</button>
       </div>`;
     case "2fa input":
-      return `<div id="${Date.now()}" data-type="2fa input" class="interaction-group">
+      return `<div id="${id || dateNow}" data-type="2fa input" class="interaction-group">
         <p class="bold type">type: ${interaction.type || ""}</p>
         <span>name: <input type="text" name="name" value="${interaction.name || ""}"/></span>
         <span>
@@ -147,13 +145,13 @@ const renderHtml = (interaction) => {
         <button name="remove" type="button">remove</button>
       </div>`;
     case "balance target":
-      return `<div id="${Date.now()}" data-type="balance target" class="interaction-group">
+      return `<div id="${id || dateNow}" data-type="balance target" class="interaction-group">
         <p class="bold type">type: ${interaction.type || ""}</p>
         <span>
           dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
           ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
         </span>
-        <span>spreadsheet column: <input type="text" name="2fa_lookup" value="${interaction.spreadsheet_column || ""}"/></span>
+        <span>spreadsheet column: <input type="text" name="spreadsheet_column" value="${interaction.spreadsheet_column || ""}"/></span>
         <button name="remove" type="button">remove</button>
       </div>`;
     default:
@@ -161,7 +159,12 @@ const renderHtml = (interaction) => {
   }
 }
 
-const loadData = () => {
+const loadData = (reset = false) => {
+  if (reset) {
+    accountUrl.value = '';
+    addedInteractions.innerHTML = `<h3 class="margin-top">added interactions</h3>`;
+  }
+
   if (Object.keys(storage).length) {
     Object.keys(storage).forEach(key => {
       if (key === 'url') {
@@ -169,7 +172,7 @@ const loadData = () => {
       } else if (key === 'interactions') {
         // assumes only interactions
         Object.keys(storage.interactions).forEach(interactionId => {
-          addedInteractions.innerHTML += renderHtml(storage.interactions[interactionId]); // dangerous eg. XSS
+          addedInteractions.innerHTML += renderHtml(storage.interactions[interactionId], interactionId); // dangerous eg. XSS
         });
       }
     });
@@ -195,6 +198,31 @@ addInteraction.addEventListener('click', () => {
   addedInteractions.innerHTML += renderHtml({ // jank object due to shared renderer
     type: selectedInteraction
   });
+});
+
+addAccount.addEventListener('click', () => {
+  if (Object.keys(storage.interactions).length) {
+    // generate JSON from storage
+    const newObj = {};
+
+    newObj['url'] = storage.url;
+    newObj['interactions'] = [];
+
+    // assumes sorted but can sort by id (ufo sort)
+    Object.keys(storage.interactions).forEach(interaction => {
+      const tmpObj = {};
+
+      Object.keys(storage.interactions[interaction]).forEach(key => {
+        tmpObj[key] = storage.interactions[interaction][key];
+      });
+
+      newObj.interactions.push(tmpObj);
+    });
+
+    console.log(newObj);
+  } else {
+    alert('Please add interaction steps');
+  }
 });
 
 // receive from dom-interaction.js
