@@ -4,7 +4,8 @@ getAjax('http://localhost:5042/get-account-prefixes', res => {
   const data = JSON.parse(res);
 
   if (data?.accountPrefixes.length) {
-    document.getElementById('prefix-list').innerText = 'Existing accounts:' + '\n\n' + data.accountPrefixes.map(val => val).join('\n');
+    document.getElementById('prefix-list-status').innerText = 'Existing accounts';
+    document.getElementById('prefix-list').innerText = data.accountPrefixes.map(val => val).join('\n');
   }
 });
 

@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 5042;
 
-const { addAuthCode, getAccountPrefixes, addAccount } = require('./methods');
+const { addAuthCode, getAccountPrefixes, addAccount, getAccounts } = require('./methods');
 
 // CORs
 app.use((req, res, next) => {
@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/get-account-prefixes', getAccountPrefixes);
-
+app.get('/get-accounts', getAccounts);
 app.post('/add-auth-code', addAuthCode);
 app.post('/add-account', addAccount);
 

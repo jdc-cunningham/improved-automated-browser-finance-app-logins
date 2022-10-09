@@ -42,8 +42,13 @@ button {
   cursor: pointer;
 }
 
-#prefix-list {
+#prefix-list-status {
   margin-top: 1rem;
+  font-weight: bold;
+}
+
+#prefix-list {
+  margin-top: 0.5rem;
 }
 
 .row {
@@ -59,4 +64,8 @@ button {
 
 #auth-code, #add-auth-code {
   margin-left: 0.5rem;
+}
+
+#account-sync-status {
+  padding-top: 0.5rem;
 }

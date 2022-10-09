@@ -102,7 +102,7 @@ const getAccountPrefixes = async (req, res) => {
   );
 }
 
-  // from https://stackoverflow.com/questions/8083410/how-can-i-set-the-default-timezone-in-node-js
+// from https://stackoverflow.com/questions/8083410/how-can-i-set-the-default-timezone-in-node-js
 const _getDateTime = (format = '') => {
   let date_ob = new Date();
 
@@ -152,9 +152,27 @@ const addAccount = async (req, res) => {
   ); 
 }
 
+const getAccounts = async (req, res) => {
+  pool.query(
+    `SELECT account_name FROM accounts WHERE id > 0`,
+    (err, qres) => {
+      if (err) {
+        res.status(400).json({err: true});
+      } else {
+        if (qres.length) {
+          res.status(200).json({err: false, accounts: qres.map(row => row.account_name)});
+        } else {
+          res.status(200).json({err: false, accounts: []});
+        }
+      }
+    }
+  );
+}
+
 module.exports = {
   getAuthCodeFromDb,
   addAuthCode,
   getAccountPrefixes,
-  addAccount
+  addAccount,
+  getAccounts
 };
