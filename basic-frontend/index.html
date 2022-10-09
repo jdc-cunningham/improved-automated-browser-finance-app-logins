@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semi-automated browser finance app logins</title>
+  <link rel="stylesheet" href="css-reset.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="app_run-sync">
+      <div class="row">
+        <h2>Run sync job</h2>
+        <button type="button" id="run-sync">run</button>
+      </div>
+      <div class="column">
+        <h3>Accounts</h3>
+      </div>
+    </div>
+    <div id="app_2fa">
+      <h2>Add auth code</h2>
+      <p>As the sync job runs some apps will have 2FA prompts, enter them here based on look up.</p>
+      <div class="row">
+        <input id="account-prefix"  type="text" name="prefix" placeholder="ex. bofa"/>
+        <input id="auth-code" type="number" name="auth code" placeholder="123456"/>
+        <button id="add-auth-code" type="button">Add</button>
+      </div>
+      <p id="prefix-list">Fetching existing accounts...</p>
+    </div>
+  </div>
+  <script src="scripts.js"></script>
+  <script src="run-sync.js"></script>
+  <script src="2fa.js"></script>
+</body>
+</html>
