@@ -60,6 +60,7 @@ const processAccount = async (jsonAccountAccessInfo) => {
 
     // ready to run through interactions
     try {
+      // recursive function
       const processStep = async (step) => {
         const { type } = step;
 
