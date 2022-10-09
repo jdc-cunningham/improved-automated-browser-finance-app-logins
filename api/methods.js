@@ -14,8 +14,6 @@ const getAuthCodeFromDb = async (accountPrefix) => {
             // validate if within 10 minute limit in case old/still waiting
             const now = trimTimestamp(Date.now());
 
-            console.log(`${now} vs ${qres[0].updated_at}`);
-
             if ((now - 120) < qres[0].updated_at) { // 2 minute min elapsed time check
               resolve({err: false, authCode: qres[0].auth_code});
             } else {
@@ -169,10 +167,34 @@ const getAccounts = async (req, res) => {
   );
 }
 
+// difference between this one and above is it includes the interaction JSON
+const getAccountsToSync = async () => {
+  return new Promise((resolve) => {
+    pool.query(
+      `SELECT account_name, interaction_json FROM accounts WHERE id > 0`,
+      (err, qres) => {
+        if (err) {
+          resolve({err: true});
+        } else {
+          if (qres.length) {
+            resolve({err: false, accounts: qres.map(row => ({
+              name: row.account_name,
+              interactions: row.interaction_json
+            }))});
+          } else {
+            resolve({err: false, accounts: []});
+          }
+        }
+      }
+    );
+  });
+}
+
 module.exports = {
   getAuthCodeFromDb,
   addAuthCode,
   getAccountPrefixes,
   addAccount,
-  getAccounts
+  getAccounts,
+  getAccountsToSync
 };

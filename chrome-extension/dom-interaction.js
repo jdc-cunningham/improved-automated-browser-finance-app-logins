@@ -12,8 +12,6 @@ const sendMessageToExtension = (msg) => {
 chrome.runtime.onMessage.addListener((request, sender, callback) => {
   const msg = request;
 
-  console.log(msg);
-
   if (msg?.cmd) {
     if (msg.cmd === 'show-hover-element-picker') {
       elementPickEnabled = true;
@@ -39,8 +37,15 @@ const domPathFinder = (el) => {
     tag = 'span';
   }
 
+  
+  if (elementString.indexOf('<a') !== -1) {
+    tag = 'a';
+  }
+
   if (elementString.indexOf('id') !== -1) {
     return `${tag}#${el.id}`;
+  } else {
+    return `${tag}.${Array.from(el.classList).join('.')}`;
   }
 }
 
@@ -61,10 +66,6 @@ document.addEventListener('click', (el) => {
     // determine unique selector for element
     el.target.style.border = "";
     elementPickEnabled = false;
-
-    console.log(domPathFinder(el.target));
-    
-    console.log(parentId);
 
     sendMessageToExtension({
       elementPath: domPathFinder(el.target),

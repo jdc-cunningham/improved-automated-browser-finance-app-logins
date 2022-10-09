@@ -4,7 +4,7 @@ const app = express();
 const port = 5042;
 
 const { addAuthCode, getAccountPrefixes, addAccount, getAccounts } = require('./methods');
-
+const { runSync } = require('./run-sync'); // what
 // CORs
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -27,6 +27,7 @@ app.get('/get-account-prefixes', getAccountPrefixes);
 app.get('/get-accounts', getAccounts);
 app.post('/add-auth-code', addAuthCode);
 app.post('/add-account', addAccount);
+app.get('/run-sync', runSync);
 
 app.listen(port, () => {
   console.log(`App running... on port ${port}`);

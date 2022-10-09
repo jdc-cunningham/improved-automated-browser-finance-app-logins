@@ -36,7 +36,6 @@ const sendMessageToInjectedScript = (msg) => {
 
 const updateValues = (parentId) => {
   Array.from(document.getElementById(parentId).getElementsByTagName('INPUT')).forEach(input => {
-    console.log(input.name, input.value);
     storage['interactions'][parentId][input.name] = input.value;
   });
 }
@@ -51,9 +50,6 @@ document.addEventListener('keyup', (el) => {
 
   const parentId = el.target.parentNode.parentNode.id;
   const interactionType = document.getElementById(parentId).getAttribute('data-type');
-  console.log('parent id', parentId);
-  
-  console.log('key up', interactionType);
 
   if (!(parentId in storage.interactions)) {
     storage.interactions[parentId] = {
@@ -81,15 +77,12 @@ document.addEventListener('keyup', (el) => {
 document.addEventListener('click', (el) => {
   if (el.target.nodeName === "BUTTON" && el.target.name === "remove") {
     const parentId = el.target.parentNode.id;
-    console.log(parentId, storage);
     storage.interactions[parentId] = undefined;
     document.getElementById(parentId).remove();
-    console.log(storage);
     saveData();
   }
 
   if (el.target.nodeName === "BUTTON" && el.target.name === "element-picker") {
-    console.log('pick');
     const parentId = el.target.parentNode.parentNode.id;
     const type = document.getElementById(parentId).querySelector('.type').innerText.split('type: ')[1];
 
@@ -146,7 +139,7 @@ const renderHtml = (interaction, id = "") => {
           dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
           ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
         </span>
-        <span>2fa lookup: <input type="text" name="2fa_lookup" value="${interaction.value_lookup || ""}"/></span>
+        <span>2fa lookup: <input type="text" name="2fa_lookup" value="${interaction['2fa_lookup'] || ""}"/></span>
         <button name="remove" type="button">remove</button>
       </div>`;
     case "balance target":
@@ -211,7 +204,6 @@ function postAjax(url, data, success) {
 
 // could add more but paste makes sense
 accountUrl.addEventListener('paste', (e) => {
-  console.log('paste');
   storage['url'] = e.clipboardData.getData('text/plain');
   saveData();
 });
@@ -235,6 +227,7 @@ addAccount.addEventListener('click', () => {
     const newObj = {};
 
     newObj['url'] = storage.url;
+    newObj['name'] = storage.name;
     newObj['interactions'] = [];
 
     // assumes sorted but can sort by id (ufo sort)
@@ -252,7 +245,7 @@ addAccount.addEventListener('click', () => {
     postAjax(
       'http://localhost:5042/add-account',
       {
-        interactionData: JSON.stringify(storage)
+        interactionData: JSON.stringify(newObj)
       },
       (res) => {
         console.log(res);

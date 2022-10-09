@@ -47,7 +47,7 @@ connection.query(
      ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',
   (error, results, fields) => {
       if (error) {
-          console.log('error creating table users:', error.sqlMessage);
+          console.log('error creating table auth_codes:', error.sqlMessage);
           return;
       }
   }
@@ -65,7 +65,7 @@ connection.query(
      ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci',
   (error, results, fields) => {
       if (error) {
-          console.log('error creating table users:', error.sqlMessage);
+          console.log('error creating table accounts:', error.sqlMessage);
           return;
       }
   }

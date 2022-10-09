@@ -12,11 +12,20 @@ const delay = (time) => {
   });
 }
 
-const takeScreenshot = async () => {
+const takeScreenshot = async (page) => {
   await page.screenshot({
     path: "./screenshot.png",
-    fullPage: true
+    fullPage: false
   });
+}
+
+// might use this for bypassing 2FA if not required
+const getBalanceDomTarget = (jsonAccountAccessInfo) => {
+  const { url, interactions, captcha } = jsonAccountAccessInfo;
+
+  for (let i = 0; i < interactions.length; i++) { // dumb
+
+  }
 }
 
 /**
@@ -65,6 +74,9 @@ const processAccount = async (jsonAccountAccessInfo) => {
         const { type } = step;
 
         if (loggingEnabled) console.log(step);
+
+        await takeScreenshot(page);
+        await delay(5000);
 
         switch (type) {
           case "input":
