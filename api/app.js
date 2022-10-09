@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 5042;
 
-const { addAuthCode, getAccountPrefixes } = require('./methods');
+const { addAuthCode, getAccountPrefixes, addAccount } = require('./methods');
 
 // CORs
 app.use((req, res, next) => {
@@ -26,6 +26,7 @@ app.get('/', (req, res) => {
 app.get('/get-account-prefixes', getAccountPrefixes);
 
 app.post('/add-auth-code', addAuthCode);
+app.post('/add-account', addAccount);
 
 app.listen(port, () => {
   console.log(`App running... on port ${port}`);

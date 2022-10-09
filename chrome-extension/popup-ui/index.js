@@ -12,6 +12,7 @@ if (!('interactions' in storage)) {
 }
 
 // pop-ui interactive elements
+const accountName = document.getElementById('account-name');
 const accountUrl = document.getElementById('account-url');
 const selectInteraction = document.getElementById('select-interaction-type');
 const addInteraction = document.getElementById('add-interaction');
@@ -44,6 +45,10 @@ const updateValues = (parentId) => {
 // this captures modifications to input elements primarily for interactions
 // forms the object and saves, keeps order of interactions
 document.addEventListener('keyup', (el) => {
+  if (el.target.id === "account-name") {
+    return;
+  }
+
   const parentId = el.target.parentNode.parentNode.id;
   const interactionType = document.getElementById(parentId).getAttribute('data-type');
   console.log('parent id', parentId);
@@ -161,13 +166,16 @@ const renderHtml = (interaction, id = "") => {
 
 const loadData = (reset = false) => {
   if (reset) {
+    accountName.value = '';
     accountUrl.value = '';
     addedInteractions.innerHTML = `<h3 class="margin-top">added interactions</h3>`;
   }
 
   if (Object.keys(storage).length) {
     Object.keys(storage).forEach(key => {
-      if (key === 'url') {
+      if (key === 'name') {
+        accountName.value = storage[key];
+      } else if (key === 'url') {
         accountUrl.value = storage[key];
       } else if (key === 'interactions') {
         // assumes only interactions
@@ -185,10 +193,31 @@ const saveData = () => {
   localStorage.setItem('ibfa-temp-store', JSON.stringify(storage));
 }
 
+function postAjax(url, data, success) {
+  var params = typeof data == 'string' ? data : Object.keys(data).map(
+          function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(data[k]) }
+      ).join('&');
+
+  var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+  xhr.open('POST', url);
+  xhr.onreadystatechange = function() {
+      if (xhr.readyState>3 && xhr.status==200) { success(xhr.responseText); }
+  };
+  xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  xhr.send(params);
+  return xhr;
+}
+
 // could add more but paste makes sense
 accountUrl.addEventListener('paste', (e) => {
   console.log('paste');
   storage['url'] = e.clipboardData.getData('text/plain');
+  saveData();
+});
+
+accountName.addEventListener('keyup', (e) => {
+  storage['name'] = e.target.value;
   saveData();
 });
 
@@ -219,7 +248,16 @@ addAccount.addEventListener('click', () => {
       newObj.interactions.push(tmpObj);
     });
 
-    console.log(newObj);
+    // save to DB, yeah hardcoded api endpoint
+    postAjax(
+      'http://localhost:5042/add-account',
+      {
+        interactionData: JSON.stringify(storage)
+      },
+      (res) => {
+        console.log(res);
+      }
+    );
   } else {
     alert('Please add interaction steps');
   }
