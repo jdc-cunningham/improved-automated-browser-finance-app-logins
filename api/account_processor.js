@@ -78,7 +78,7 @@ const processAccount = async (jsonAccountAccessInfo) => {
             );
             await delay(10000); // time to deal with captcha, captcha not always applicable
             break;
-          case "2fa":
+          case "2fa option":
             if ("dom_targets" in step) { // multi-radio
               await page.waitForSelector(step.dom_targets);
               // this is not working, doesn't click
