@@ -37,7 +37,7 @@ const getBalanceDomTarget = (jsonAccountAccessInfo) => {
 const processAccount = async (jsonAccountAccessInfo) => {
   return new Promise(async (resolve) => {
     // load site
-    const { url, interactions, captcha } = jsonAccountAccessInfo;
+    const { url, interactions, captcha, name } = jsonAccountAccessInfo;
 
     const browser = await puppeteer.launch({
       headless: !captcha,
@@ -75,8 +75,9 @@ const processAccount = async (jsonAccountAccessInfo) => {
 
         if (loggingEnabled) console.log(step);
 
-        await takeScreenshot(page);
-        await delay(5000);
+        // use this to watch what's happening if headless
+        // await takeScreenshot(page);
+        // await delay(5000);
 
         switch (type) {
           case "input":
@@ -127,7 +128,10 @@ const processAccount = async (jsonAccountAccessInfo) => {
         if (interactionStep < interactions.length) {
           processStep(interactions[interactionStep]);
         } else {
-          resolve(balance);
+          resolve({
+            name,
+            balance
+          });
         }
       };
 
