@@ -146,7 +146,7 @@ const renderHtml = (interaction, id = "") => {
       return `<div id="${id || dateNow}" data-type="balance target" class="interaction-group">
         <p class="bold type">type: ${interaction.type || ""}</p>
         <span>
-          dom target: <input type="text" name="dom_target" value="${interaction.dom_target || ""}"/>
+          dom target: <input type="text" name="dom_target" value='${interaction.dom_target || ""}'/>
           ${!interaction.dom_target ? `<button type="button" name="element-picker" title="click this then hover over element on website">pick element</button>` : ""}
         </span>
         <span>spreadsheet column: <input type="text" name="spreadsheet_column" value="${interaction.spreadsheet_column || ""}"/></span>

@@ -5,3 +5,7 @@ To save time from logging in to various accounts to write balances into a spread
 [Demo Video](https://www.youtube.com/watch?v=YJ2OlW_EZPg)
 
 [Code overview](https://www.youtube.com/watch?v=pQxgp8Tku28)
+
+### Issues
+
+The dom target selector can use work, particularly for balances

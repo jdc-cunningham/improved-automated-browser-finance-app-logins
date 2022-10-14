@@ -64,7 +64,9 @@ const processAccount = async (jsonAccountAccessInfo) => {
     });
 
     let interactionStep = 0;
+    let balanceTargets = 0;
     let balance = null; // generally a string but could be float ha
+    const balances = []; // array of objects
     const loggingEnabled = true;
 
     // ready to run through interactions
@@ -76,8 +78,10 @@ const processAccount = async (jsonAccountAccessInfo) => {
         if (loggingEnabled) console.log(step);
 
         // use this to watch what's happening if headless
-        // await takeScreenshot(page);
-        // await delay(5000);
+        if (!captcha) {
+          await takeScreenshot(page);
+          await delay(5000);
+        }
 
         switch (type) {
           case "input":
@@ -117,7 +121,11 @@ const processAccount = async (jsonAccountAccessInfo) => {
             break;
           case "balance target":
             balance = await page.$eval(step.dom_target, el => el.textContent);
-            await browser.close();
+            balances.push({
+              balance,
+              column: step.spreadsheet_column
+            });
+            balanceTargets += 1;
             break;
           default:
             throw 'unknown interaction';
@@ -128,10 +136,20 @@ const processAccount = async (jsonAccountAccessInfo) => {
         if (interactionStep < interactions.length) {
           processStep(interactions[interactionStep]);
         } else {
-          resolve({
-            name,
-            balance
-          });
+          await browser.close();
+
+          if (balanceTargets > 1) {
+            resolve({
+              name,
+              balances
+            }); // step before spreadsheet writer will sort this out
+          } else {
+            resolve({
+              name,
+              balance,
+              column: step.spreadsheet_column
+            });
+          }
         }
       };
 
