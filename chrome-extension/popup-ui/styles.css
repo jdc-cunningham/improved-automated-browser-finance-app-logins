@@ -1,0 +1,59 @@
+body {
+  min-width: 350px;
+}
+
+body * {
+  box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
+  color: #282828;
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.hidden {
+  display: none;
+}
+
+#container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+}
+
+.margin-top {
+  margin-top: 0.5rem;
+}
+
+button#add-account {
+  margin-top: 1.5rem;
+}
+
+button#add-account:disabled {
+  cursor: not-allowed;
+}
+
+.interaction-group {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  border-top: 1px solid #282828;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.span {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: row;
+}

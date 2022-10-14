@@ -1,0 +1,26 @@
+
+{
+  "name": "Login Balance Check Process Capture",
+  "version": "1.0",
+  "description": "Manually capture the elements and steps performed to login to an account to get the balance",
+  "manifest_version": 2,
+  "icons": {
+    "16": "./icons/icon_dark_16.png",
+    "48": "./icons/icon_dark_48.png",
+    "128": "./icons/icon_dark_128.png"
+  },
+  "browser_action": {
+    "default_icon": "./icons/icon_dark_16.png",
+    "default_popup": "popup-ui/index.html"
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "run_at": "document_start",
+      "js": ["dom-interaction.js"]
+    }
+  ]
+}

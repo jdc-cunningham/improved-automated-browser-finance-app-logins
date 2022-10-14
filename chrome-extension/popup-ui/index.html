@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser Automation Record Interact Playback</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="container">
+    <h1>Add new account</h1>
+    <h3>Basic info</h3>
+    <input id="account-name" type="text" placeholder="name"/>
+    <input id="account-url" type="text" placeholder="url"/>
+    <h3 class="margin-top">Interactions</h3>
+    <p>Note: you can use the element picker or manually enter in a querySelector target.</p>
+    <div class="row">
+      <select id="select-interaction-type">
+        <option value="input">input</option>
+        <option value="button">button</option>
+        <option value="2fa option">2fa option</option>
+        <option value="2fa input">2fa input</option>
+        <option value="balance target">balance target</option>
+      </select>
+      <button type="button" id="add-interaction">Add</button>
+    </div>
+    <div class="column" id="added-interactions">
+      <h3 class="margin-top">added interactions</h3>
+    </div>
+    <button class="margin-top" title="fill in all fields to add" type="button" id="add-account">Add account</button>
+    <button id="reset" type="button">Reset</button>
+  </div>
+  <script src="index.js"></script>
+</body>
+</html>
